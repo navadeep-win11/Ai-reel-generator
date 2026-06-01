@@ -50,6 +50,11 @@ export default function App() {
         topic: newControls.topic,
       });
 
+      if (data.error === 'API_RATE_LIMIT') {
+        alert(data.message || 'Gemini API quota exceeded. Please wait a minute or update your API key.');
+        return;
+      }
+
       if (data.ideas && data.ideas.length > 0) {
         const ideasWithIds = data.ideas.map((idea: any, index: number) => ({
           ...idea,

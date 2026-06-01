@@ -41,6 +41,15 @@ Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslati
         res.json({ ideas });
     } catch (error) {
         console.error("Gemini ideas error:", error);
+        
+        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'API_RATE_LIMIT', 
+                message: 'Gemini API quota exceeded. Please wait a minute or update your API key.' 
+            });
+        }
+        
         res.status(500).json({ error: "Failed to generate ideas", details: error.message });
     }
 };

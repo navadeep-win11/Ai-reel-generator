@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build": "cd frontend && npm install && npm run build"
+    "build": "npm install --prefix frontend && npm run build --prefix frontend"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",

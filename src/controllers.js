@@ -12,29 +12,32 @@ exports.generateIdeas = async (req, res) => {
     const { visualStyle, languageScript, topic } = req.body;
     console.log(`[API] generateIdeas payload -> Topic: ${topic}, Language: ${languageScript}`);
     try {
-        let languageRule = `in "${languageScript}" language.`;
+        let languageRule = `Language: ${languageScript}.`;
         if (languageScript && languageScript.toLowerCase() === 'tenglish') {
-            languageRule = `The output MUST be written strictly in the Telugu language but using the English alphabet (Latin script). For example: "Nuvvu kacchithanga gelusthavu". Absolutely NO Telugu script and NO pure English text.`;
+            languageRule = `Language: Telugu (written in English/Latin alphabet only).`;
         } else if (languageScript && languageScript.toLowerCase() === 'hindi') {
-            languageRule = `The output MUST be strictly in pure Hindi script without blending English.`;
+            languageRule = `Language: Pure Hindi (no English words).`;
         } else {
-            languageRule = `The output MUST be strictly in the ${languageScript} language. No mixing languages.`;
+            languageRule = `Language: strictly ${languageScript}.`;
         }
         
-        const prompt = `Generate 5 video ideas strictly about the topic: "${topic}".
+        const prompt = `Generate 5 short video ideas on topic: "${topic}".
 ${languageRule}
-Visual style is "${visualStyle}".
-Return a JSON array of exactly 5 objects. Each object must have these keys: "quote" (the text), "quoteTranslation" (translation if applicable, or repeat the quote), "imagePrompt" (a visual prompt for AI image gen), "suggestedVoice" (a voice name).`;
+Style: "${visualStyle}".
+Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslation", "imagePrompt", "suggestedVoice". No markdown.`;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json'
             }
         });
         
-        const ideas = JSON.parse(response.text());
+        const rawText = response.text().trim();
+        // Fallback clean if it includes markdown blocks despite mimeType
+        const cleanJson = rawText.replace(/^```json/i, '').replace(/```$/, '').trim();
+        const ideas = JSON.parse(cleanJson);
         res.json({ ideas });
     } catch (error) {
         console.error("Gemini ideas error:", error);

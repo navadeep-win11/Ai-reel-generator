@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend"
+    "build": "npm install --prefix frontend --no-audit --no-fund && npm run build --prefix frontend"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",

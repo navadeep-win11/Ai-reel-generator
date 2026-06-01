@@ -1,10 +1,10 @@
-const { GoogleGenAI } = require('@google/genai');
+const Groq = require('groq-sdk');
 const fs = require('fs');
 const queue = require('./queue');
 const { renderVideo } = require('./videoRenderer');
 
-// Initialize Gemini API client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize Groq API client
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // No offline fallback ideas; return real errors instead
 
@@ -24,29 +24,26 @@ exports.generateIdeas = async (req, res) => {
         const prompt = `Generate 5 short video ideas on topic: "${topic}".
 ${languageRule}
 Style: "${visualStyle}".
-Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslation", "imagePrompt", "suggestedVoice". No markdown.`;
+Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslation", "imagePrompt", "suggestedVoice". No markdown, no preambles, just the JSON array.`;
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json'
-            }
+        const response = await groq.chat.completions.create({
+            model: 'llama3-70b-8192',
+            messages: [{ role: 'user', content: prompt }]
         });
         
-        const rawText = response.text().trim();
+        const rawText = response.choices[0].message.content.trim();
         // Fallback clean if it includes markdown blocks despite mimeType
         const cleanJson = rawText.replace(/^```json/i, '').replace(/```$/, '').trim();
         const ideas = JSON.parse(cleanJson);
         res.json({ ideas });
     } catch (error) {
-        console.error("Gemini ideas error:", error);
+        console.error("Groq ideas error:", error);
         
         if (error.status === 429 || (error.message && error.message.includes('429'))) {
             return res.status(429).json({ 
                 success: false, 
                 error: 'API_RATE_LIMIT', 
-                message: 'Gemini API quota exceeded. Please wait a minute or update your API key.' 
+                message: 'Groq API quota exceeded. Please wait a minute or update your API key.' 
             });
         }
         
@@ -63,13 +60,13 @@ Pace it at approximately 2.5 words per second.
 Format it strictly into three parts: Hook, Body, and Call to Action (CTA). 
 IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labels like "Hook:", just the natural text to be read out loud.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt
+        const response = await groq.chat.completions.create({
+            model: 'llama3-70b-8192',
+            messages: [{ role: 'user', content: prompt }]
         });
         
         // Ensure clean text without markdown tags
-        const cleanText = response.text().replace(/[\*\#]/g, '').trim();
+        const cleanText = response.choices[0].message.content.replace(/[\*\#]/g, '').trim();
         res.send(cleanText);
     } catch (error) {
         console.error("Script generation error:", error);
@@ -99,30 +96,11 @@ exports.generateTts = async (req, res) => {
 };
 
 exports.generateImage = async (req, res) => {
-    const { imagePrompt, provider } = req.body;
+    const { imagePrompt } = req.body;
     const cinematicTags = "cinematic lighting, ultra-realistic textures, dark moody atmosphere, professional raw photography, motorcycle raw bokeh documentary aesthetic";
     const fullPrompt = `${imagePrompt}, ${cinematicTags}`;
     
-    if (provider === 'gemini') {
-        try {
-            const response = await ai.models.generateImages({
-                model: 'imagen-3.0',
-                prompt: fullPrompt,
-                config: {
-                    aspectRatio: '9:16',
-                    numberOfImages: 1,
-                    outputMimeType: 'image/jpeg'
-                }
-            });
-            const base64 = response.generatedImages[0].image.imageBytes;
-            return res.json({ image: `data:image/jpeg;base64,${base64}` });
-        } catch (error) {
-            console.error("Imagen failed, automatically falling back to Pollinations.ai:", error.message);
-            // Fall through to free provider logic automatically
-        }
-    }
-    
-    // Fallback or explicit free provider: Pollinations.ai
+    // Explicit free provider: Pollinations.ai
     const formattedPrompt = encodeURIComponent(fullPrompt);
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
     res.json({ image: pollinationsUrl });

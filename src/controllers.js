@@ -6,38 +6,7 @@ const { renderVideo } = require('./videoRenderer');
 // Initialize Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const offlineFallbackIdeas = [
-    {
-        quote: "Success is not final, failure is not fatal.",
-        quoteTranslation: "El éxito no es el final, el fracaso no es fatal.",
-        imagePrompt: "A dark moody mountain landscape at sunrise",
-        suggestedVoice: "alloy"
-    },
-    {
-        quote: "Do what you can, with what you have, where you are.",
-        quoteTranslation: "Haz lo que puedas, con lo que tengas, donde estés.",
-        imagePrompt: "A solitary boat on a calm lake reflecting the starry night",
-        suggestedVoice: "echo"
-    },
-    {
-        quote: "Believe you can and you're halfway there.",
-        quoteTranslation: "Cree que puedes y ya estás a medio camino.",
-        imagePrompt: "A steep staircase leading up into the clouds",
-        suggestedVoice: "fable"
-    },
-    {
-        quote: "It always seems impossible until it's done.",
-        quoteTranslation: "Siempre parece imposible hasta que se hace.",
-        imagePrompt: "A person standing at the edge of a cliff looking at a galaxy",
-        suggestedVoice: "onyx"
-    },
-    {
-        quote: "Dream big and dare to fail.",
-        quoteTranslation: "Sueña en grande y atrévete a fallar.",
-        imagePrompt: "A glowing doorway in a dark enchanted forest",
-        suggestedVoice: "nova"
-    }
-];
+// No offline fallback ideas; return real errors instead
 
 exports.generateIdeas = async (req, res) => {
     const { visualStyle, languageScript, topic } = req.body;
@@ -68,8 +37,8 @@ Return a JSON array of exactly 5 objects. Each object must have these keys: "quo
         const ideas = JSON.parse(response.text());
         res.json({ ideas });
     } catch (error) {
-        console.error("Gemini ideas error, using fallback:", error);
-        res.json({ ideas: offlineFallbackIdeas });
+        console.error("Gemini ideas error:", error);
+        res.status(500).json({ error: "Failed to generate ideas", details: error.message });
     }
 };
 

@@ -1,0 +1,6 @@
+{
+  "name": "Faceless Reels AI",
+  "description": "Premium 100% automatic generation of dark aesthetic faceless Quote Reels with custom scripts and visualizer effects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

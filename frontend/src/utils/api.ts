@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+export const API_BASE = 'https://ai-reel-generator-production.up.railway.app/api';
 
 export const fetchConfig = async () => {
   const response = await fetch(`${API_BASE}/config`);

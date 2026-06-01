@@ -125,7 +125,7 @@ exports.generateImage = async (req, res) => {
                 }
             });
             const base64 = response.generatedImages[0].image.imageBytes;
-            return res.json({ image: \`data:image/jpeg;base64,\${base64}\` });
+            return res.json({ image: `data:image/jpeg;base64,${base64}` });
         } catch (error) {
             console.error("Imagen failed, automatically falling back to Pollinations.ai:", error.message);
             // Fall through to free provider logic automatically
@@ -134,16 +134,16 @@ exports.generateImage = async (req, res) => {
     
     // Fallback or explicit free provider: Pollinations.ai
     const formattedPrompt = encodeURIComponent(imagePrompt);
-    const pollinationsUrl = \`https://image.pollinations.ai/prompt/\${formattedPrompt}?width=1080&height=1920&nologo=true\`;
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
     res.json({ image: pollinationsUrl });
 };
 
 exports.generateThumbnail = async (req, res) => {
     const { quoteText, visualStyle } = req.body;
     // Direct URL-safe prompt formatting for Pollinations
-    const promptTemplate = \`A striking, high-quality \${visualStyle} vertical thumbnail background. In the center, clear and bold typography displaying the exact text: '\${quoteText}'.\`;
+    const promptTemplate = `A striking, high-quality ${visualStyle} vertical thumbnail background. In the center, clear and bold typography displaying the exact text: '${quoteText}'.`;
     const formattedPrompt = encodeURIComponent(promptTemplate);
-    const pollinationsUrl = \`https://image.pollinations.ai/prompt/\${formattedPrompt}?width=1080&height=1920&nologo=true\`;
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
     res.json({ image: pollinationsUrl });
 };
 

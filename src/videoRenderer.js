@@ -33,9 +33,9 @@ function saveBase64ToFile(base64Str, destPath) {
  */
 exports.renderVideo = async (imageUrl, ttsAudio, text) => {
     const runId = uuidv4();
-    const tempVideo = path.join(os.tmpdir(), \`output-\${runId}.mp4\`);
-    const tempImage = path.join(os.tmpdir(), \`image-\${runId}.jpg\`);
-    const tempAudio = path.join(os.tmpdir(), \`audio-\${runId}.mp3\`);
+    const tempVideo = path.join(os.tmpdir(), `output-${runId}.mp4`);
+    const tempImage = path.join(os.tmpdir(), `image-${runId}.jpg`);
+    const tempAudio = path.join(os.tmpdir(), `audio-${runId}.mp3`);
 
     const tempFilesToClean = [tempImage, tempAudio];
 

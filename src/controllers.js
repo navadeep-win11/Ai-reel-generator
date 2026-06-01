@@ -87,23 +87,18 @@ IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labe
 exports.generateTts = async (req, res) => {
     const { text, voice } = req.body;
     try {
-        const prompt = `Generate high quality speech audio for the following text using a voice profile suitable for '${voice}':\n${text}`;
+        const googleTTS = require('google-tts-api');
+        const axios = require('axios');
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.1-flash-tts-preview',
-            contents: prompt
+        // Use free google-tts-api (limited to 200 chars per chunk, but sufficient for quotes)
+        // For longer texts we'd use getAllAudioBase64, but getAudioBase64 is fine for short text.
+        const base64Audio = await googleTTS.getAudioBase64(text.substring(0, 200), {
+            lang: 'en',
+            slow: false,
+            host: 'https://translate.google.com',
         });
         
-        // Extract base64 inline audio data from Gemini response
-        const candidate = response.candidates && response.candidates[0];
-        const part = candidate && candidate.content && candidate.content.parts && 
-                     candidate.content.parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('audio/'));
-        
-        if (part && part.inlineData) {
-            return res.json({ base64Audio: part.inlineData.data }); // base64 string
-        }
-        
-        throw new Error("No audio data found in model response");
+        return res.json({ base64Audio });
     } catch (error) {
         console.error("TTS generation error:", error);
         res.status(500).json({ error: "Failed to generate TTS", details: error.message });

@@ -27,7 +27,7 @@ Style: "${visualStyle}".
 Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslation", "imagePrompt", "suggestedVoice". No markdown, no preambles, just the JSON array.`;
         
         const response = await groq.chat.completions.create({
-            model: 'llama3-70b-8192',
+            model: 'llama-3.1-8b-instant',
             messages: [{ role: 'user', content: prompt }]
         });
         
@@ -61,7 +61,7 @@ Format it strictly into three parts: Hook, Body, and Call to Action (CTA).
 IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labels like "Hook:", just the natural text to be read out loud.`;
 
         const response = await groq.chat.completions.create({
-            model: 'llama3-70b-8192',
+            model: 'llama-3.1-8b-instant',
             messages: [{ role: 'user', content: prompt }]
         });
         

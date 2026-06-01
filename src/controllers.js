@@ -41,8 +41,20 @@ const offlineFallbackIdeas = [
 
 exports.generateIdeas = async (req, res) => {
     const { visualStyle, languageScript, topic } = req.body;
+    console.log(`[API] generateIdeas payload -> Topic: ${topic}, Language: ${languageScript}`);
     try {
-        const prompt = `Generate 5 video ideas about "${topic}" in "${languageScript}" language with a "${visualStyle}" visual style.
+        let languageRule = `in "${languageScript}" language.`;
+        if (languageScript && languageScript.toLowerCase() === 'tenglish') {
+            languageRule = `The output MUST be written strictly in the Telugu language but using the English alphabet (Latin script). For example: "Nuvvu kacchithanga gelusthavu". Absolutely NO Telugu script and NO pure English text.`;
+        } else if (languageScript && languageScript.toLowerCase() === 'hindi') {
+            languageRule = `The output MUST be strictly in pure Hindi script without blending English.`;
+        } else {
+            languageRule = `The output MUST be strictly in the ${languageScript} language. No mixing languages.`;
+        }
+        
+        const prompt = `Generate 5 video ideas strictly about the topic: "${topic}".
+${languageRule}
+Visual style is "${visualStyle}".
 Return a JSON array of exactly 5 objects. Each object must have these keys: "quote" (the text), "quoteTranslation" (translation if applicable, or repeat the quote), "imagePrompt" (a visual prompt for AI image gen), "suggestedVoice" (a voice name).`;
         
         const response = await ai.models.generateContent({
@@ -107,12 +119,14 @@ exports.generateTts = async (req, res) => {
 
 exports.generateImage = async (req, res) => {
     const { imagePrompt, provider } = req.body;
+    const cinematicTags = "cinematic lighting, ultra-realistic textures, dark moody atmosphere, professional raw photography, motorcycle raw bokeh documentary aesthetic";
+    const fullPrompt = `${imagePrompt}, ${cinematicTags}`;
     
     if (provider === 'gemini') {
         try {
             const response = await ai.models.generateImages({
                 model: 'imagen-3.0',
-                prompt: imagePrompt,
+                prompt: fullPrompt,
                 config: {
                     aspectRatio: '9:16',
                     numberOfImages: 1,
@@ -128,34 +142,50 @@ exports.generateImage = async (req, res) => {
     }
     
     // Fallback or explicit free provider: Pollinations.ai
-    const formattedPrompt = encodeURIComponent(imagePrompt);
+    const formattedPrompt = encodeURIComponent(fullPrompt);
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
     res.json({ image: pollinationsUrl });
 };
 
 exports.generateThumbnail = async (req, res) => {
     const { quoteText, visualStyle } = req.body;
-    // Direct URL-safe prompt formatting for Pollinations
-    const promptTemplate = `A striking, high-quality ${visualStyle} vertical thumbnail background. In the center, clear and bold typography displaying the exact text: '${quoteText}'.`;
+    const cinematicTags = "cinematic lighting, ultra-realistic textures, dark moody atmosphere, professional raw photography, motorcycle raw bokeh documentary aesthetic";
+    const promptTemplate = `A striking, high-quality ${visualStyle} vertical thumbnail background. In the center, clear and bold typography displaying the exact text: '${quoteText}'. ${cinematicTags}`;
     const formattedPrompt = encodeURIComponent(promptTemplate);
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
     res.json({ image: pollinationsUrl });
 };
 
 exports.renderReel = async (req, res) => {
-    const { imageUrl, ttsAudio, text } = req.body;
+    const { selectedIdea } = req.body;
+    console.log(`[API] renderReel payload -> selectedIdea:`, selectedIdea);
     
-    if (!imageUrl || !ttsAudio) {
-        return res.status(400).json({ error: "imageUrl and ttsAudio are required" });
+    if (!selectedIdea) {
+        return res.status(400).json({ error: "selectedIdea is required" });
     }
 
     try {
+        // Step 1: Image Generation with Cinematic Tags
+        const cinematicTags = "cinematic lighting, ultra-realistic textures, dark moody atmosphere, professional raw photography, motorcycle raw bokeh documentary aesthetic";
+        const formattedPrompt = encodeURIComponent(`${selectedIdea.imagePrompt}, ${cinematicTags}`);
+        const imageUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
+
+        // Step 2: TTS Generation using google-tts-api
+        const googleTTS = require('google-tts-api');
+        const textToSpeech = selectedIdea.quote;
+        const base64Audio = await googleTTS.getAudioBase64(textToSpeech.substring(0, 200), {
+            lang: 'en',
+            slow: false,
+            host: 'https://translate.google.com',
+        });
+        const ttsAudio = `data:audio/mp3;base64,${base64Audio}`;
+
         // Enqueue the rendering job to prevent RAM overloading on Railway
         const videoPath = await queue.add(async () => {
-            return await renderVideo(imageUrl, ttsAudio, text);
+            return await renderVideo(imageUrl, ttsAudio, selectedIdea.quote);
         });
 
-        // Strictly set the header before sending
+        // Strictly set the header before sending MP4
         res.setHeader('Content-Type', 'video/mp4');
         
         // Stream the file back to the client

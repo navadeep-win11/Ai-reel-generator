@@ -8,7 +8,7 @@ import { Play, Pause, Download, RefreshCw, Smartphone, Sparkles, AlertCircle, Ar
 import { IdeaItem, VisualStyle, ReelControls } from './types';
 import { getAestheticImage } from './utils/imageCurator';
 import { phonkSynth } from './utils/phonkSynth';
-import { generateTTS } from './utils/api';
+import { generateTTS, API_BASE } from './utils/api';
 
 interface ReelPreviewProps {
   idea: IdeaItem | null;
@@ -26,6 +26,7 @@ export default function ReelPreview({ idea, controls, onReset }: ReelPreviewProp
   const [recordProgress, setRecordProgress] = useState(0);
   const [estimatedRemainingSeconds, setEstimatedRemainingSeconds] = useState<number>(0);
   const [playbackTime, setPlaybackTime] = useState(0);
+  const [compiledVideoUrl, setCompiledVideoUrl] = useState<string | null>(null);
   const [hasGeminiTTS, setHasGeminiTTS] = useState(false);
   const [activeSpeech, setActiveSpeech] = useState<SpeechSynthesisUtterance | null>(null);
 
@@ -452,71 +453,36 @@ export default function ReelPreview({ idea, controls, onReset }: ReelPreviewProp
     });
   };
 
-  // Direct Recorder Subroutine using MediaRecorder representing output video compiler
+  // Triggers the backend FFmpeg rendering pipeline instead of client-side MediaRecorder
   const compileAndDownloadVideo = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
+    if (!idea) return;
     try {
       setIsRecording(true);
-      setRecordProgress(0);
-      setEstimatedRemainingSeconds(controls.duration);
+      setRecordProgress(50);
+      setEstimatedRemainingSeconds(10);
+      setConsoleLogs(prev => [...prev, "[RENDER ENGINE] Triggering backend /render-reel compilation (libx264/aac)..."]);
 
-      // Start BGM loop to capture live
-      startPlayback();
-
-      // Set up recording streams
-      const canvasStream = canvas.captureStream(30); // 30 FPS export is stable and lightweight
-      
-      const mediaRecorder = new MediaRecorder(canvasStream, {
-        mimeType: 'video/mp4',
-        videoBitsPerSecond: 5000000, // 5 Mbps HD feel
+      const response = await fetch(`${API_BASE}/render-reel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedIdea: idea })
       });
 
-      const chunks: Blob[] = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
+      if (!response.ok) {
+        throw new Error('Backend rendering failed.');
+      }
 
-      mediaRecorder.onstop = () => {
-        const videoBlob = new Blob(chunks, { type: 'video/mp4' });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        
-        // Auto trigger download anchor
-        const a = document.createElement('a');
-        a.href = videoUrl;
-        a.download = `facelessreels-${controls.visualStyle}-${Date.now()}.mp4`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        setIsRecording(false);
-        stopPlayback();
-      };
-
-      mediaRecorder.start();
-
-      // Progress bar ticker over total requested duration
-      let timer = 0;
-      const totalSeconds = controls.duration;
-      const interval = setInterval(() => {
-        timer += 0.5;
-        const calculatedProgress = Math.min((timer / totalSeconds) * 100, 100);
-        setRecordProgress(Math.floor(calculatedProgress));
-        setEstimatedRemainingSeconds(Math.max(0, Math.ceil(totalSeconds - timer)));
-        
-        if (timer >= totalSeconds) {
-          clearInterval(interval);
-          mediaRecorder.stop();
-        }
-      }, 500);
-
-    } catch (err: any) {
-      console.error("Recording initialization failed:", err);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setCompiledVideoUrl(url);
+      setRecordProgress(100);
       setIsRecording(false);
-      alert("Failed to initialize system recorder. Make sure your browser supports standard MediaRecorder capabilities.");
+      
+      setConsoleLogs(prev => [...prev, "[RENDER ENGINE] MP4 Video compiled and ready for preview."]);
+    } catch (err: any) {
+      console.error("Backend render failed:", err);
+      setIsRecording(false);
+      alert("Failed to render video on the backend server.");
     }
   };
 
@@ -662,19 +628,24 @@ export default function ReelPreview({ idea, controls, onReset }: ReelPreviewProp
             <div className="pt-2 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={compileAndDownloadVideo}
-                disabled={isRecording}
+                disabled={isRecording || compiledVideoUrl !== null}
                 id="download-video-btn"
                 className="flex-1 flex items-center justify-center gap-2.5 bg-zinc-100 hover:bg-white text-black font-semibold text-sm py-4 px-6 rounded-xl transition-all shadow-md shadow-zinc-500/5 disabled:opacity-50"
               >
                 {isRecording ? (
                   <>
                     <RefreshCw className="w-4.5 h-4.5 text-black animate-spin" />
-                    <span>Compiling MP4 ({recordProgress}%) · ~{estimatedRemainingSeconds}s remaining</span>
+                    <span>Compiling MP4 on Server...</span>
+                  </>
+                ) : compiledVideoUrl ? (
+                  <>
+                    <Sparkles className="w-4.5 h-4.5 text-black" />
+                    <span>Reel Compiled successfully</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-4.5 h-4.5 text-black" />
-                    <span>Export & Download HD Video</span>
+                    <span>Export & Compile MP4</span>
                   </>
                 )}
               </button>
@@ -709,14 +680,22 @@ export default function ReelPreview({ idea, controls, onReset }: ReelPreviewProp
               {/* Side camera and interactive layers */}
               <div className="absolute inset-2 bg-black rounded-[28px] overflow-hidden flex flex-col justify-between relative shadow-inner">
                 
-                {/* 1. Real 9:16 canvas display */}
-                <canvas 
-                  ref={canvasRef} 
-                  width={1080} 
-                  height={1920} 
-                  className="absolute inset-0 w-full h-full object-cover rounded-[28px]"
-                  id="rendered-reels-canvas"
-                />
+                {/* 1. Real 9:16 canvas display or MP4 Preview */}
+                {compiledVideoUrl ? (
+                  <video 
+                    controls
+                    src={compiledVideoUrl}
+                    className="absolute inset-0 w-full h-full object-cover rounded-[28px] z-30"
+                  />
+                ) : (
+                  <canvas 
+                    ref={canvasRef} 
+                    width={1080} 
+                    height={1920} 
+                    className="absolute inset-0 w-full h-full object-cover rounded-[28px]"
+                    id="rendered-reels-canvas"
+                  />
+                )}
 
                 {/* Subtitle / Volume Toggles overlay corner */}
                 <div className="absolute top-16 right-4 z-10 flex flex-col gap-2">
@@ -728,38 +707,39 @@ export default function ReelPreview({ idea, controls, onReset }: ReelPreviewProp
                   </div>
                 </div>
 
-                {/* 2. Controls overlay centered on bottom of smartphone mock */}
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 flex flex-col space-y-4">
-                  
-                  {/* Progress Line */}
-                  <div className="space-y-1">
-                    <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-white transition-all duration-300"
-                        style={{ width: `${(playbackTime / controls.duration) * 100}%` }}
-                      />
+                {!compiledVideoUrl && (
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 flex flex-col space-y-4 z-20">
+                    
+                    {/* Progress Line */}
+                    <div className="space-y-1">
+                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white transition-all duration-300"
+                          style={{ width: `${(playbackTime / controls.duration) * 100}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[9px] font-mono text-zinc-400">
+                        <span>0:0{playbackTime}</span>
+                        <span>0:0{controls.duration}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-[9px] font-mono text-zinc-400">
-                      <span>0:0{playbackTime}</span>
-                      <span>0:0{controls.duration}</span>
-                    </div>
-                  </div>
 
-                  {/* Play Button Overlay */}
-                  <div className="flex items-center justify-center">
-                    <button
-                      onClick={togglePlay}
-                      id="play-reels-player-btn"
-                      className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all"
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-5 h-5 fill-black stroke-black stroke-[3px]" />
-                      ) : (
-                        <Play className="w-5 h-5 fill-black stroke-black ml-0.5 stroke-[3px]" />
-                      )}
-                    </button>
+                    {/* Play Button Overlay */}
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={togglePlay}
+                        id="play-reels-player-btn"
+                        className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all"
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-5 h-5 fill-black stroke-black stroke-[3px]" />
+                        ) : (
+                          <Play className="w-5 h-5 fill-black stroke-black ml-0.5 stroke-[3px]" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

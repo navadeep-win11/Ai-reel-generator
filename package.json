@@ -2,6 +2,9 @@
   "name": "faceless-reels-ai-backend",
   "version": "1.0.0",
   "description": "Backend API for Faceless Reels AI",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

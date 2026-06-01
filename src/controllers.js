@@ -6,6 +6,30 @@ const { renderVideo } = require('./videoRenderer');
 // Initialize Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+async function generateContentWithFallback(prompt, config = null) {
+    try {
+        const params = { model: 'gemini-1.5-flash-latest', contents: prompt };
+        if (config) params.config = config;
+        return await ai.models.generateContent(params);
+    } catch (error1) {
+        const is404 = error1.status === 404 || (error1.message && (error1.message.includes('404') || error1.message.includes('NOT_FOUND')));
+        if (is404) {
+            console.warn("gemini-1.5-flash-latest not found, falling back to gemini-1.5-pro-latest");
+            try {
+                const params2 = { model: 'gemini-1.5-pro-latest', contents: prompt };
+                if (config) params2.config = config;
+                return await ai.models.generateContent(params2);
+            } catch (error2) {
+                console.warn("gemini-1.5-pro-latest failed, falling back to gemini-pro");
+                const params3 = { model: 'gemini-pro', contents: prompt };
+                if (config) params3.config = config;
+                return await ai.models.generateContent(params3);
+            }
+        }
+        throw error1;
+    }
+}
+
 // No offline fallback ideas; return real errors instead
 
 exports.generateIdeas = async (req, res) => {
@@ -26,12 +50,8 @@ ${languageRule}
 Style: "${visualStyle}".
 Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslation", "imagePrompt", "suggestedVoice". No markdown.`;
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json'
-            }
+        const response = await generateContentWithFallback(prompt, {
+            responseMimeType: 'application/json'
         });
         
         const rawText = response.text().trim();
@@ -63,10 +83,7 @@ Pace it at approximately 2.5 words per second.
 Format it strictly into three parts: Hook, Body, and Call to Action (CTA). 
 IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labels like "Hook:", just the natural text to be read out loud.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt
-        });
+        const response = await generateContentWithFallback(prompt);
         
         // Ensure clean text without markdown tags
         const cleanText = response.text().replace(/[\*\#]/g, '').trim();

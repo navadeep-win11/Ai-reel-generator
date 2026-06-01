@@ -12,6 +12,7 @@
     "build": "npm install --prefix frontend --no-audit --no-fund && npm run build --prefix frontend"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@google/genai": "^2.7.0",
     "axios": "^1.7.2",
     "cors": "^2.8.5",

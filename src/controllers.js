@@ -54,10 +54,10 @@ Return a JSON array of exactly 5 objects. Each object must have these keys: "quo
         });
         
         const ideas = JSON.parse(response.text());
-        res.json(ideas);
+        res.json({ ideas });
     } catch (error) {
         console.error("Gemini ideas error, using fallback:", error);
-        res.json(offlineFallbackIdeas);
+        res.json({ ideas: offlineFallbackIdeas });
     }
 };
 
@@ -100,7 +100,7 @@ exports.generateTts = async (req, res) => {
                      candidate.content.parts.find(p => p.inlineData && p.inlineData.mimeType.startsWith('audio/'));
         
         if (part && part.inlineData) {
-            return res.json({ audio: part.inlineData.data }); // base64 string
+            return res.json({ base64Audio: part.inlineData.data }); // base64 string
         }
         
         throw new Error("No audio data found in model response");

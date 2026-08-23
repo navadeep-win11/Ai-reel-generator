@@ -42,18 +42,23 @@ exports.renderVideo = async (imageUrl, ttsAudio, text) => {
     const tempFilesToClean = [tempImage, tempAudio];
 
     try {
-        // 1. Prepare Image Input
+        // 1 & 2. Prepare Image and Audio Inputs in parallel
+        const downloadTasks = [];
+
         if (imageUrl.startsWith('http')) {
-            await downloadFile(imageUrl, tempImage);
+            downloadTasks.push(downloadFile(imageUrl, tempImage));
         } else if (imageUrl.startsWith('data:image')) {
             saveBase64ToFile(imageUrl, tempImage);
         }
 
-        // 2. Prepare Audio Input
         if (ttsAudio.startsWith('http')) {
-            await downloadFile(ttsAudio, tempAudio);
+            downloadTasks.push(downloadFile(ttsAudio, tempAudio));
         } else {
             saveBase64ToFile(ttsAudio, tempAudio);
+        }
+
+        if (downloadTasks.length > 0) {
+            await Promise.all(downloadTasks);
         }
 
         // 3. Render 1080x1920 .mp4 pipeline with fluent-ffmpeg

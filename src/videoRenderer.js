@@ -77,16 +77,16 @@ exports.renderVideo = async (imageUrl, ttsAudio, text) => {
         });
 
         // 4. Strict ephemeral cleanup (inputs)
-        tempFilesToClean.forEach(f => {
-            try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (e) {}
-        });
+        await Promise.allSettled(
+            tempFilesToClean.filter(Boolean).map(f => fs.promises.unlink(f))
+        );
 
         return tempVideo;
     } catch (error) {
         // Absolute cleanup on any failure
-        [...tempFilesToClean, tempVideo].forEach(f => {
-            try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (e) {}
-        });
+        await Promise.allSettled(
+            [...tempFilesToClean, tempVideo].filter(Boolean).map(f => fs.promises.unlink(f))
+        );
         throw error;
     }
 };

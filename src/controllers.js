@@ -75,7 +75,7 @@ IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labe
 };
 
 exports.generateTts = async (req, res) => {
-    const { text, voice } = req.body;
+    const { text } = req.body;
     try {
         const googleTTS = require('google-tts-api');
         const axios = require('axios');

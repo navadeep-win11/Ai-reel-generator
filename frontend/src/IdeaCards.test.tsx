@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import IdeaCards from './IdeaCards';
 import { IdeaItem, VisualStyle } from './types';
+import type { Mock } from 'vitest';
 
 // Mock getAestheticImage to avoid any external dependencies issues
 vi.mock('./utils/imageCurator', () => ({
@@ -28,7 +29,7 @@ const mockIdeas: IdeaItem[] = [
 const mockVisualStyle: VisualStyle = 'dark_minimalist';
 
 describe('IdeaCards Component', () => {
-  let onCreateReelMock: ReturnType<typeof vi.fn>;
+  let onCreateReelMock: Mock;
 
   beforeEach(() => {
     onCreateReelMock = vi.fn();

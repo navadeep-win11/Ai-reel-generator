@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Download, RefreshCw, Smartphone, Sparkles, AlertCircle, ArrowLeft, Volume2, Music, VolumeX } from 'lucide-react';
+import { Play, Pause, Download, RefreshCw, Sparkles, AlertCircle, ArrowLeft, Volume2, VolumeX } from 'lucide-react';
 import { IdeaItem, VisualStyle, ReelControls } from './types';
 import { getAestheticImage } from './utils/imageCurator';
 import { phonkSynth } from './utils/phonkSynth';

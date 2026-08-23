@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Film, Layers, ArrowRight, BookOpen, VolumeX } from 'lucide-react';
+import { CheckCircle2, Film, Layers, ArrowRight, BookOpen } from 'lucide-react';
 import { IdeaItem, VisualStyle } from './types';
 import { getAestheticImage } from './utils/imageCurator';
 

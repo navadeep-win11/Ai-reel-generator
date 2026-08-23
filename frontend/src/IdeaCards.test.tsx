@@ -7,7 +7,7 @@ describe('IdeaCards', () => {
     const { container } = render(
       <IdeaCards
         ideas={[]}
-        visualStyle="cinematic"
+        visualStyle="cinematic_motorcycle"
         onCreateReel={() => {}}
         isRendering={false}
       />

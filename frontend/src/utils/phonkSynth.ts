@@ -13,6 +13,7 @@ class PhonkSynthEngine {
   private step = 0;
   private masterGain: GainNode | null = null;
   private bassSynthGain: GainNode | null = null;
+  private noiseBuffer: AudioBuffer | null = null;
 
   constructor() {}
 
@@ -63,6 +64,7 @@ class PhonkSynthEngine {
     }
     this.masterGain = null;
     this.bassSynthGain = null;
+    this.noiseBuffer = null;
   }
 
   private schedulePattern(step: number, time: number) {
@@ -159,15 +161,17 @@ class PhonkSynthEngine {
     if (!this.ctx || !this.masterGain) return;
 
     // Noise buffer for snap drum
-    const bufferSize = this.ctx.sampleRate * 0.04;
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+    if (!this.noiseBuffer) {
+      const bufferSize = this.ctx.sampleRate * 0.04;
+      this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = this.noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
     }
 
     const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = this.noiseBuffer;
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'highpass';

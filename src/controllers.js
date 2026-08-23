@@ -2,6 +2,7 @@ const Groq = require('groq-sdk');
 const fs = require('fs');
 const queue = require('./queue');
 const { renderVideo } = require('./videoRenderer');
+const googleTTS = require('google-tts-api');
 
 // Initialize Groq API client
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -77,9 +78,6 @@ IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labe
 exports.generateTts = async (req, res) => {
     const { text, voice } = req.body;
     try {
-        const googleTTS = require('google-tts-api');
-        const axios = require('axios');
-        
         // Use free google-tts-api (limited to 200 chars per chunk, but sufficient for quotes)
         // For longer texts we'd use getAllAudioBase64, but getAudioBase64 is fine for short text.
         const base64Audio = await googleTTS.getAudioBase64(text.substring(0, 200), {
@@ -130,7 +128,6 @@ exports.renderReel = async (req, res) => {
         const imageUrl = `https://image.pollinations.ai/prompt/${formattedPrompt}?width=1080&height=1920&nologo=true`;
 
         // Step 2: TTS Generation using google-tts-api
-        const googleTTS = require('google-tts-api');
         const textToSpeech = selectedIdea.quote;
         const base64Audio = await googleTTS.getAudioBase64(textToSpeech.substring(0, 200), {
             lang: 'en',

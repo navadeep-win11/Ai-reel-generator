@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build": "npm install --prefix frontend --no-audit --no-fund && npm run build --prefix frontend"
+    "build": "npm install --prefix frontend --no-audit --no-fund && npm run build --prefix frontend",
+    "test": "jest"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
@@ -22,5 +23,9 @@
     "google-tts-api": "^2.0.2",
     "groq-sdk": "^1.2.1",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "node-mocks-http": "^1.18.1"
   }
 }

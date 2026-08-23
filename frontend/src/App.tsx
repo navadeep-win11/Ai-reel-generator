@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Film, Sparkles, Wand2, Info, Moon, Settings, Zap, Compass, RefreshCw } from 'lucide-react';
+import { Film, Info, Moon, Zap, Compass } from 'lucide-react';
 import { ReelControls, IdeaItem } from './types';
 import ControlPanel from './ControlPanel';
 import IdeaCards from './IdeaCards';

@@ -47,7 +47,7 @@ Output strictly as a JSON array of 5 objects with keys: "quote", "quoteTranslati
             });
         }
         
-        res.status(500).json({ error: "Failed to generate ideas", details: error.message });
+        res.status(500).json({ error: "Failed to generate ideas" });
     }
 };
 
@@ -70,7 +70,7 @@ IMPORTANT: Return ONLY the clean spoken text. No markdown, no bold text, no labe
         res.send(cleanText);
     } catch (error) {
         console.error("Script generation error:", error);
-        res.status(500).json({ error: "Failed to generate script", details: error.message });
+        res.status(500).json({ error: "Failed to generate script" });
     }
 };
 
@@ -91,7 +91,7 @@ exports.generateTts = async (req, res) => {
         return res.json({ base64Audio });
     } catch (error) {
         console.error("TTS generation error:", error);
-        res.status(500).json({ error: "Failed to generate TTS", details: error.message });
+        res.status(500).json({ error: "Failed to generate TTS" });
     }
 };
 
@@ -164,6 +164,6 @@ exports.renderReel = async (req, res) => {
         
     } catch (error) {
         console.error("Render queue error:", error);
-        res.status(500).json({ error: "Failed to render video", details: error.message });
+        res.status(500).json({ error: "Failed to render video" });
     }
 };

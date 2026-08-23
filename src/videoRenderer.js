@@ -90,3 +90,8 @@ exports.renderVideo = async (imageUrl, ttsAudio, text) => {
         throw error;
     }
 };
+
+// Export helpers for testing
+if (process.env.NODE_ENV === 'test') {
+    exports.__test__ = { downloadFile, saveBase64ToFile };
+}

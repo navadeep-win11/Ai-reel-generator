@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import ReelPreview from '../ReelPreview';
-import { IdeaItem, ReelControls } from '../types';
+import { IdeaItem, ReelControls, VisualStyle, LanguageScript } from '../types';
 import * as apiModule from '../utils/api';
 
 vi.mock('../utils/api', () => ({
@@ -19,21 +19,19 @@ vi.mock('../utils/phonkSynth', () => ({
 
 const mockIdea: IdeaItem = {
   id: '1',
-  topic: 'Motivation',
-  hook: 'Want to be successful?',
   quote: 'Just do it.',
-  visualStyle: 'sigma',
-  suggestedVoice: 'Fenrir',
-  bgmType: 'phonk',
+  imagePrompt: 'A simple image',
+  suggestedVoice: 'Fenrir'
 };
 
 const mockControls: ReelControls = {
   voiceoverOn: true,
-  captionsOn: true,
-  visualsOn: true,
   phonkBgmOn: true,
   duration: 15,
-  visualStyle: 'sigma'
+  visualStyle: 'dark_minimalist',
+  languageScript: 'english',
+  selectedFont: 'sans',
+  topic: 'Motivation',
 };
 
 describe('ReelPreview TTS Error Handling', () => {

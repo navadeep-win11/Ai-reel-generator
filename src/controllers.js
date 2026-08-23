@@ -78,7 +78,6 @@ exports.generateTts = async (req, res) => {
     const { text, voice } = req.body;
     try {
         const googleTTS = require('google-tts-api');
-        const axios = require('axios');
         
         // Use free google-tts-api (limited to 200 chars per chunk, but sufficient for quotes)
         // For longer texts we'd use getAllAudioBase64, but getAudioBase64 is fine for short text.

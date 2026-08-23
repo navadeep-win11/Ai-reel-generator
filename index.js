@@ -6,7 +6,11 @@ const routes = require('./src/routes');
 const app = express();
 
 // Configure CORS for frontend communication (Vercel/Netlify)
-app.use(cors());
+const corsOptions = {
+    origin: process.env.APP_URL || 'http://localhost:3000',
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Increase JSON payload limit to handle base64 audio/images
 app.use(express.json({ limit: '50mb' }));

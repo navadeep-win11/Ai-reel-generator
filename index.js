@@ -17,8 +17,15 @@ app.use('/api', routes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
+    console.error(err.message);
     console.error(err.stack);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+
+    const response = { error: 'Internal Server Error' };
+    if (process.env.NODE_ENV !== 'production') {
+        response.message = err.message;
+    }
+
+    res.status(500).json(response);
 });
 
 // Bind to process.env.PORT for Railway

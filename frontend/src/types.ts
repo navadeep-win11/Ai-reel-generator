@@ -26,19 +26,3 @@ export interface IdeaItem {
   imageUrl?: string; // Search-sourced or AI-generated image
 }
 
-export interface RenderParams {
-  id: string;
-  quote: string;
-  imagePrompt: string;
-  audioVoice: string;
-  musicBgm: boolean;
-  duration: number;
-  visualStyle: VisualStyle;
-  selectedFont: string;
-}
-
-export interface RenderResult {
-  videoUrl: string;
-  success: boolean;
-  error?: string;
-}

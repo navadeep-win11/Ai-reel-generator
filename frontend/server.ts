@@ -128,7 +128,7 @@ Return a valid JSON array complying strictly to this JSON schema:
     return res.json({ 
       ideas: getOfflineIdeas(visualStyle, languageScript, topic), 
       isOfflineMode: true,
-      error: error.message 
+      error: "Failed to generate ideas"
     });
   }
 });
@@ -167,7 +167,7 @@ app.post("/api/generate-tts", async (req, res) => {
     }
   } catch (err: any) {
     console.error("Gemini TTS service error:", err.message);
-    res.status(500).json({ error: err.message || "Failed to generate TTS audio stream." });
+    res.status(500).json({ error: "Failed to generate TTS audio stream." });
   }
 });
 
@@ -407,7 +407,7 @@ app.post("/api/render-reel", async (req, res) => {
     // 5. Execute FFmpeg
     command.on("error", (err, stdout, stderr) => {
       console.error("FFmpeg Error:", err.message);
-      res.status(500).json({ error: "Failed to render video", details: err.message });
+      res.status(500).json({ error: "Failed to render video" });
     });
 
     command.on("end", () => {

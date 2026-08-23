@@ -22,11 +22,11 @@ async function downloadFile(url, destPath) {
 }
 
 // Helper to write raw base64 data to a file
-function saveBase64ToFile(base64Str, destPath) {
+async function saveBase64ToFile(base64Str, destPath) {
     // Strip data prefix if present (e.g., data:audio/mp3;base64,...)
     const base64Data = base64Str.replace(/^data:\w+\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(destPath, buffer);
+    await fs.promises.writeFile(destPath, buffer);
 }
 
 /**
@@ -46,14 +46,14 @@ exports.renderVideo = async (imageUrl, ttsAudio, text) => {
         if (imageUrl.startsWith('http')) {
             await downloadFile(imageUrl, tempImage);
         } else if (imageUrl.startsWith('data:image')) {
-            saveBase64ToFile(imageUrl, tempImage);
+            await saveBase64ToFile(imageUrl, tempImage);
         }
 
         // 2. Prepare Audio Input
         if (ttsAudio.startsWith('http')) {
             await downloadFile(ttsAudio, tempAudio);
         } else {
-            saveBase64ToFile(ttsAudio, tempAudio);
+            await saveBase64ToFile(ttsAudio, tempAudio);
         }
 
         // 3. Render 1080x1920 .mp4 pipeline with fluent-ffmpeg
